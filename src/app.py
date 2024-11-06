@@ -68,7 +68,7 @@ def count_projects(topic: str) -> int:
     """Count how many projects there are by topic.
 
     Args:
-        topic: The topic to which the project belongs (e.g., mobile, web, AI).
+        topic: The topic to which the project belongs.
     """
     return db.count_projects(topic)
 
