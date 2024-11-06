@@ -82,3 +82,15 @@ def add_chat(*, user_id, title) -> int:
     finally:
         cur.close()
         cnx.close()
+
+def get_project(id: int):
+    try:
+        cnx = get_db_connection()
+        cur = cnx.cursor(dictionary=True)
+        get_project = "SELECT * FROM project WHERE id = %s"
+        cur.execute(get_project, (id,))
+        project = cur.fetchone()
+        return project
+    finally:
+        cur.close()
+        cnx.close()

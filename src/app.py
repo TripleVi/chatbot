@@ -9,6 +9,8 @@ from langchain_google_vertexai import ChatVertexAI, VertexAIEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from langchain.tools.retriever import create_retriever_tool
 from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.documents import Document
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pinecone import Pinecone
 
 import database as db
@@ -28,6 +30,21 @@ retriever = vector_store.as_retriever(
     search_type="similarity_score_threshold",
     search_kwargs={"k": 20, "score_threshold": 0.7},
 )
+
+def add_project_documents(project):
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    splits = text_splitter.split_text(project["description"])
+    docs = [
+        Document(
+            page_content=f"Title: {project['title']}\nContent: {split}",
+            metadata={"project_id": project["id"]}
+        )
+        for split in splits
+    ]
+    vector_store.add_documents(documents=docs)
+
+def delete_project_documents(id: int):
+    vector_store.delete(filter={"project_id": {"$eq": id}})
 
 def generate_chat_title(user_input: str):
     prompt_template = ChatPromptTemplate([
@@ -111,11 +128,19 @@ def handle_chat(chat_id):
         print(err)
         return 'Internal Server', 500
     
-@app.route("/projects/<project_id>", methods=["POST"])
-def on_project_added(project_id):
+@app.route("/projects/<id>", methods=["POST"])
+def on_project_added(id):
     status = itemgetter("status")(request.get_json())
-    print(status)
-    print(project_id)
+    project = db.get_project(id)
+    if not project:
+        return "Not Found", 404
+    
+    match status:
+        case "created":
+            add_project_documents(project)
+        # case "updated":
+        # case "deleted":
+        # case _:
     return "No Content", 204
 
 if __name__ == "__main__":
