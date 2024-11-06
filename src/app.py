@@ -120,4 +120,4 @@ def on_project_added(project_id):
 
 if __name__ == "__main__":
     port = os.environ.get("PORT", 5000)
-    app.run(port=port, debug=True)
+    app.run(port=port)
