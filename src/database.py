@@ -94,3 +94,21 @@ def get_project(id: int):
     finally:
         cur.close()
         cnx.close()
+
+def count_projects(topic: str) -> int:
+    try:
+        cnx = get_db_connection()
+        cur = cnx.cursor(dictionary=True)
+        query = """
+            SELECT COUNT(*) AS count
+            FROM topic
+            INNER JOIN project ON topic.id = project.topic_id
+            WHERE topic.name = %s
+            GROUP BY topic.id;
+        """
+        cur.execute(query, (topic,))
+        result = cur.fetchone()
+        return result["count"] if result else 0
+    finally:
+        cur.close()
+        cnx.close()

@@ -10,6 +10,7 @@ from langchain_pinecone import PineconeVectorStore
 from langchain.tools.retriever import create_retriever_tool
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_core.documents import Document
+from langchain_core.tools import tool
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pinecone import Pinecone
 
@@ -62,14 +63,27 @@ def get_chat_history(id: int):
         for i, m in enumerate(raw_messages)
     ]
 
+@tool(parse_docstring=True)
+def count_projects(topic: str) -> int:
+    """Count how many projects there are by topic.
+
+    Args:
+        topic: The topic to which the project belongs (e.g., mobile, web, AI).
+    """
+    return db.count_projects(topic)
+
 def get_tools():
     retrieve_projects = create_retriever_tool(
         retriever,
         "retrieve_graduation_projects",
         "Searches and returns excerpts from Vietnamese articles about University of Greenwich students' graduation projects.",
     )
-    available_tools = {"retrieve_graduation_projects": retrieve_projects}
-    return (available_tools, [retrieve_projects])
+    available_tools = {
+        "retrieve_graduation_projects": retrieve_projects,
+        "count_projects": count_projects
+    }
+    tools = [retrieve_projects, count_projects]
+    return (available_tools, tools)
 
 def chatbot(*, chat_id: int, user_input: str):
     prompt_template = ChatPromptTemplate([
