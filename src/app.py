@@ -48,6 +48,8 @@ def delete_project_documents(id: int):
     vector_store.delete(filter={"project_id": {"$eq": id}})
 
 def generate_chat_title(user_input: str):
+    return "chat title"
+
     prompt_template = ChatPromptTemplate([
         ("system", "You are a friendly assistant. Provide a concise Vietnamese title to the conversation based on the following question. Please respond only with the title in affirmative form, without any special characters (e.g., '.', '?', '\n') at the end."),
         ("human", "{text}")
@@ -85,7 +87,11 @@ def get_tools():
     tools = [retrieve_projects, count_projects]
     return (available_tools, tools)
 
+fixed_response = "Dự án tốt nghiệp của sinh viên Đại học Greenwich về Blockchain bao gồm:\n\n* Ví tiền điện tử đa năng dựa trên blockchain\n* Ứng dụng blockchain trong quản lý chuỗi cung ứng\n* Hệ thống quản lý hợp đồng thông minh dựa trên blockchain\n* Hệ thống bỏ phiếu điện tử bảo mật bằng blockchain"
+
 def chatbot(*, chat_id: int, user_input: str):
+    return fixed_response
+
     prompt_template = ChatPromptTemplate([
         ("system", "The system is designed to store and manage Greenwich University students' graduation projects. You are a friendly assistant tasked with answering questions about these projects in Vietnamese. Use only the provided context to answer, keeping responses concise and, if possible, in bullet points. If the information isn't available in the context, just say that you don't know. Avoid generating answers without relevant context."),
         MessagesPlaceholder("chat_history")
