@@ -2,7 +2,7 @@ import os
 
 from langchain_google_vertexai import ChatVertexAI
 from langchain.tools.retriever import create_retriever_tool
-from langchain_huggingface.embeddings import HuggingFaceEndpointEmbeddings
+from langchain_community.embeddings import HuggingFaceBgeEmbeddings
 from pinecone import Pinecone
 from langchain_pinecone import PineconeVectorStore
 from langchain_community.utilities import SQLDatabase
@@ -48,7 +48,7 @@ def retrieve_proper_nouns(query: str, source: str) -> str:
         query: An approximate spelling of the proper noun to look up in retriever.
         source: A table name to which the proper noun belongs.
     """
-    embeddings = HuggingFaceEndpointEmbeddings(model=os.environ["EMBEDDINGS_MODEL"])
+    embeddings = HuggingFaceBgeEmbeddings(model_name=os.environ["EMBEDDINGS_MODEL"])
     pc = Pinecone(os.environ["PINECONE_API_KEY"])
     index = pc.Index("proper-noun")
     vector_store = PineconeVectorStore(index, embeddings)
@@ -64,7 +64,7 @@ def retrieve_proper_nouns(query: str, source: str) -> str:
     return "\n\n".join(doc.page_content for doc in docs)
 
 def projects_retriever_tool():
-    embeddings = HuggingFaceEndpointEmbeddings(model=os.environ["EMBEDDINGS_MODEL"])
+    embeddings = HuggingFaceBgeEmbeddings(model_name=os.environ["EMBEDDINGS_MODEL"])
     pc = Pinecone(os.environ["PINECONE_API_KEY"])
     index = pc.Index("graduation-showcase2")
     vector_store = PineconeVectorStore(index, embeddings)

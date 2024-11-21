@@ -3,7 +3,7 @@ import os
 from pinecone import Pinecone
 from langchain_core.documents import Document
 from langchain_pinecone import PineconeVectorStore
-from langchain_huggingface.embeddings import HuggingFaceEndpointEmbeddings
+from langchain_community.embeddings import HuggingFaceBgeEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 def gen_project_doc_ids(id: int, doc_count: int):
@@ -12,7 +12,7 @@ def gen_project_doc_ids(id: int, doc_count: int):
 def add_project(project: dict):
     pc = Pinecone(os.environ["PINECONE_API_KEY"])
     index = pc.Index("graduation-showcase2")
-    embeddings = HuggingFaceEndpointEmbeddings(model=os.environ["EMBEDDINGS_MODEL"])
+    embeddings = HuggingFaceBgeEmbeddings(model_name=os.environ["EMBEDDINGS_MODEL"])
     vector_store = PineconeVectorStore(index, embeddings)
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1200, chunk_overlap=200)
     splits = text_splitter.split_text(project["description"])
@@ -54,7 +54,7 @@ Content: {split}"""
 def update_project(project: dict):
     pc = Pinecone(os.environ["PINECONE_API_KEY"])
     index = pc.Index("graduation-showcase2")
-    embeddings = HuggingFaceEndpointEmbeddings(model=os.environ["EMBEDDINGS_MODEL"])
+    embeddings = HuggingFaceBgeEmbeddings(model_name=os.environ["EMBEDDINGS_MODEL"])
     vector_store = PineconeVectorStore(index, embeddings)
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1200, chunk_overlap=200)
 
@@ -110,7 +110,7 @@ def gen_proper_noun_id(id: int, source: str):
 def add_proper_noun(id: int, text: str, source: str):
     pc = Pinecone(os.environ["PINECONE_API_KEY"])
     index = pc.Index("proper-noun")
-    embeddings = HuggingFaceEndpointEmbeddings(model=os.environ["EMBEDDINGS_MODEL"])
+    embeddings = HuggingFaceBgeEmbeddings(model_name=os.environ["EMBEDDINGS_MODEL"])
     vector_store = PineconeVectorStore(index, embeddings)
     doc = Document(text, metadata={"source": source})
     doc_id = gen_proper_noun_id(id, source)
@@ -119,7 +119,7 @@ def add_proper_noun(id: int, text: str, source: str):
 def update_proper_noun(id: int, text: str, source: str):
     pc = Pinecone(os.environ["PINECONE_API_KEY"])
     index = pc.Index("proper-noun")
-    embeddings = HuggingFaceEndpointEmbeddings(model=os.environ["EMBEDDINGS_MODEL"])
+    embeddings = HuggingFaceBgeEmbeddings(model_name=os.environ["EMBEDDINGS_MODEL"])
     vector_store = PineconeVectorStore(index, embeddings)
     doc = Document(text, metadata={"source": source})
     doc_id = gen_proper_noun_id(id, source)
