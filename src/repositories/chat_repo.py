@@ -27,7 +27,8 @@ def add_chat(user_id, title) -> int:
         cur.execute(query, (user_id, title, now))
         cnx.commit()
         return cur.lastrowid
-    except MySQLError:
+    except MySQLError as err:
+        print(err)
         cnx.rollback()
         raise
     finally:
@@ -66,7 +67,8 @@ def add_message(content, sender, chat_id) -> int:
         cur.execute(query, (content, sender, chat_id, now))
         cnx.commit()
         return cur.lastrowid
-    except MySQLError:
+    except MySQLError as err:
+        print(err)
         cnx.rollback()
         raise
     finally:
