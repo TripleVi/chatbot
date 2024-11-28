@@ -1,14 +1,14 @@
 import os
 import sys
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 from dotenv import load_dotenv
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+load_dotenv()
+
 from quart import Quart
 
 from routes import initRoutes
-
-load_dotenv()
 
 app = Quart(__name__)
 
