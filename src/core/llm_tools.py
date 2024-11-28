@@ -2,12 +2,11 @@ import os
 
 from langchain_google_vertexai import ChatVertexAI
 from langchain.tools.retriever import create_retriever_tool
-from langchain_community.embeddings import HuggingFaceBgeEmbeddings
-from pinecone import Pinecone
-from langchain_pinecone import PineconeVectorStore
 from langchain_community.utilities import SQLDatabase
 from langchain_community.agent_toolkits import SQLDatabaseToolkit
 from langchain_core.tools import tool
+
+from src.services import pinecone_service
 
 def init_sql_db():
     database_uri = f"mysql+mysqlconnector://{os.environ["DB_USERNAME"]}:{os.environ["DB_PASSWORD"]}@{os.environ["DB_HOST"]}:{os.environ["DB_PORT"]}/{os.environ["DB_SCHEMA"]}"
@@ -41,17 +40,14 @@ def get_sql_tools():
     return tools
 
 @tool(parse_docstring=True)
-def retrieve_proper_nouns(query: str, source: str) -> str:
+async def retrieve_proper_nouns(query: str, source: str) -> str:
     """Search and return values most similar to the proper noun within a specific table.
 
     Args:
         query: An approximate spelling of the proper noun to look up in retriever.
         source: A table name to which the proper noun belongs.
     """
-    embeddings = HuggingFaceBgeEmbeddings(model_name=os.environ["EMBEDDINGS_MODEL"])
-    pc = Pinecone(os.environ["PINECONE_API_KEY"])
-    index = pc.Index("proper-noun")
-    vector_store = PineconeVectorStore(index, embeddings)
+    vector_store = pinecone_service.get_vector_store("proper-noun")
     retriever = vector_store.as_retriever(
         search_type="similarity_score_threshold",
         search_kwargs={
@@ -60,14 +56,11 @@ def retrieve_proper_nouns(query: str, source: str) -> str:
             "filter": {"source": source},
         },
     )
-    docs = retriever.invoke(query)
+    docs = await retriever.ainvoke(query)
     return "\n\n".join(doc.page_content for doc in docs)
 
 def projects_retriever_tool():
-    embeddings = HuggingFaceBgeEmbeddings(model_name=os.environ["EMBEDDINGS_MODEL"])
-    pc = Pinecone(os.environ["PINECONE_API_KEY"])
-    index = pc.Index("graduation-showcase2")
-    vector_store = PineconeVectorStore(index, embeddings)
+    vector_store = pinecone_service.get_vector_store("graduation-showcase2")
     retriever = vector_store.as_retriever(
         search_type="similarity_score_threshold",
         search_kwargs={"k": 20, "score_threshold": 0.7},

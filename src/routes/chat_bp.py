@@ -1,29 +1,34 @@
 from operator import itemgetter
 
-from flask import Blueprint, request
+from quart import Blueprint, request
 
 from src.services import chat_service
 
 chat_bp = Blueprint("chat", __name__, url_prefix="/chats")
 
-@chat_bp.route("/", methods=["POST"])
-def create_chat():
-    content, user_id = (
-        itemgetter("content", "userId")(request.get_json())
-    )
+@chat_bp.route("", methods=["POST"])
+async def create_chat():
+    body = await request.get_json()
+    content, user_id = itemgetter("content", "userId")(body)
     try:
-        message_id = chat_service.add_chat(user_id, content)
-        return {"message_id": message_id}, 201
+        res_generator = await chat_service.add_chat(user_id, content)
+        headers = {
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive",
+            "Cache-Control": "no-cache",
+        }
+        return res_generator, 201, headers
     except Exception as err:
         print(err)
         return "Internal Server Error", 500
 
 @chat_bp.route("/<int:id>/messages", methods=["POST"])
-def create_message(id):
+async def create_message(id):
     content = itemgetter("content")(request.get_json())
     try:
-        message_id = chat_service.add_message(id, content)
-        return {"message_id": message_id}, 201
+        res_generator = await chat_service.add_message(id, content)
+        headers = {"content_type":"text/plain; charset=utf-8"}
+        return res_generator(), 201, headers
     except Exception as err:
         print(err)
         return "Internal Server Error", 500

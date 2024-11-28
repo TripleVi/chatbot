@@ -1,13 +1,13 @@
 from config.database import get_db_connection
 
-def get_major(id: int, attributes: list):
+async def get_major(id: int, attributes: list):
     try:
-        cnx = get_db_connection()
-        cur = cnx.cursor(dictionary=True)
+        cnx = await get_db_connection()
+        cur = await cnx.cursor(dictionary=True)
         select_list = ", ".join(attributes) if attributes else "*"
         query = f"SELECT {select_list} FROM major WHERE id = %s"
-        cur.execute(query, (id,))
-        return cur.fetchone()
+        await cur.execute(query, (id,))
+        return await cur.fetchone()
     finally:
-        cur.close()
-        cnx.close()
+        await cur.close()
+        await cnx.close()

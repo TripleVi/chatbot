@@ -1,25 +1,25 @@
 from config.database import get_db_connection
 
-def get_project(id: int, attributes: list):
+async def get_project(id: int, attributes: list):
     try:
-        cnx = get_db_connection()
-        cur = cnx.cursor(dictionary=True)
+        cnx = await get_db_connection()
+        cur = await cnx.cursor(dictionary=True)
         select_list = ", ".join(attributes) if attributes else "*"
         query = f"SELECT {select_list} FROM project WHERE id = %s"
-        cur.execute(query, (id,))
-        return cur.fetchone()
+        await cur.execute(query, (id,))
+        return await cur.fetchone()
     finally:
-        cur.close()
-        cnx.close()
+        await cur.close()
+        await cnx.close()
 
-def get_authors(project_id: int, attributes: list):
+async def get_authors(project_id: int, attributes: list):
     try:
-        cnx = get_db_connection()
-        cur = cnx.cursor(dictionary=True)
+        cnx = await get_db_connection()
+        cur = await cnx.cursor(dictionary=True)
         select_list = ", ".join(attributes) if attributes else "*"
         query = f"SELECT {select_list} FROM author WHERE project_id = %s"
-        cur.execute(query, (project_id,))
-        return cur.fetchall()
+        await cur.execute(query, (project_id,))
+        return await cur.fetchall()
     finally:
-        cur.close()
-        cnx.close()
+        await cur.close()
+        await cnx.close()

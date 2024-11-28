@@ -3,6 +3,7 @@ import os
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_google_vertexai import ChatVertexAI
+from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 
 from src.repositories import chat_repo
@@ -30,14 +31,14 @@ b. When crafting queries, you MUST follow these rules:
 * NEVER use the LIKE operator in a WHERE clause.
 * NEVER make any DML statements (INSERT, UPDATE, DELETE, DROP, etc.).""")
 
-def gen_chat_title(input: str):
+async def gen_chat_title(input: str):
     prompt_template = ChatPromptTemplate([
         ("system", "You are a friendly assistant. Provide a concise Vietnamese title to the conversation based on the following question. Please respond only with the title in affirmative form, without any special characters (e.g., '.', '?') at the end."),
         ("human", "{text}")
     ])
     model = ChatVertexAI(model="gemini-1.5-flash-002", temperature=1, max_tokens=40)
     chain = prompt_template | model | StrOutputParser()
-    response = chain.invoke({"text": input})
+    response = await chain.ainvoke({"text": input})
     return response.strip()
 
 def get_llm_messages(raw_messages: list[dict]):
@@ -46,14 +47,15 @@ def get_llm_messages(raw_messages: list[dict]):
         for i, m in enumerate(raw_messages)
     ]
 
-def process(chat_id: int, input: str):
+async def process(input: str, chat_id: int | None = None):
     system_message = get_system_message()
-    summary, raw_messages = chat_repo.get_chat_history(chat_id)
-    chat_history = get_llm_messages(raw_messages) + [HumanMessage(input)]
-    if summary:
-        summary_message = f"\n\nSummary of the conversation earlier: {summary}"
-        system_message += summary_message
-
+    chat_history = [HumanMessage(input)]
+    if chat_id:
+        summary, raw_messages = await chat_repo.get_chat_history(chat_id)
+        chat_history = get_llm_messages(raw_messages) + chat_history
+        if summary:
+            summary_message = f"\n\nSummary of the conversation earlier: {summary}"
+            system_message += summary_message
     prompt_template = ChatPromptTemplate([
         ("system", system_message),
         ("placeholder", "{chat_history}")
@@ -64,33 +66,44 @@ def process(chat_id: int, input: str):
     for tool in tools:
         available_tools[tool.name] = tool
     model_with_tools = model.bind_tools(tools)
-    chain = prompt_template | model_with_tools
-
-    global ai_msg
-    ai_msg = chain.invoke({"chat_history": chat_history})
-    while ai_msg.tool_calls:
-        chat_history.append(ai_msg)
-        for tool_call in ai_msg.tool_calls:
+    chain = (
+        {"chat_history": RunnablePassthrough()}
+        | prompt_template
+        | model_with_tools
+    )
+    chunks = chain.astream(chat_history)
+    message_chunk = await anext(chunks)
+    while message_chunk.tool_calls:
+        async for chunk in chunks:
+            message_chunk += chunk
+        chat_history.append(message_chunk)
+        for tool_call in message_chunk.tool_calls:
             selected_tool = available_tools[tool_call["name"].lower()]
-            tool_msg = selected_tool.invoke(tool_call)
-            chat_history.append(tool_msg)
-        ai_msg = chain.invoke({"chat_history": chat_history})
-    return ai_msg.content.strip()
+            tool_message = await selected_tool.ainvoke(tool_call)
+            chat_history.append(tool_message)
+        chunks = chain.astream(chat_history)
+        message_chunk = await anext(chunks)
+    async def content_generator():
+        yield message_chunk.content
+        async for chunk in chunks:
+            yield chunk.content
+    return content_generator()
 
-def summarize_conversation(id: int):
-    summary, raw_messages = chat_repo.get_chat_history(id)
+async def summarize_conversation(id: int):
+    summary, raw_messages = await chat_repo.get_chat_history(id)
     chat_history = get_llm_messages(raw_messages[:-2])
     if not chat_history:
         return
-    llm = ChatVertexAI(model="gemini-1.5-flash-002", temperature=1, max_tokens=500)
-    tokens = llm.get_num_tokens_from_messages(chat_history)
+    model = ChatVertexAI(model="gemini-1.5-flash-002", temperature=1, max_tokens=500)
+    tokens = model.get_num_tokens_from_messages(chat_history)
     if tokens <= 300 and len(chat_history) <= 8:
         return
+    summary_id = chat_history[-1]["id"]
     if summary:
         summary_message = f"Here is a summary of the conversation so far: {summary}\n\nExtend the summary by taking into account the new messages above, using the original language, retaining only the key points and user information, excluding greetings, thanks, goodbyes and pleasantries, and eliminating duplicate conversations. The paragraph should be brief and concise."
     else:
         summary_message = "Briefly and concisely summarize the above conversation in one paragraph, using the original language, retaining only the key points and user information, excluding greetings, thanks, goodbyes and pleasantries, and eliminating duplicate conversations."
-    messages = chat_history + [HumanMessage(content=summary_message)]
-    chain = llm | StrOutputParser()
-    response = chain.invoke(messages)
-    return response.strip()
+    chat_history.append(HumanMessage(content=summary_message))
+    chain = model | StrOutputParser()
+    response = await chain.ainvoke(chat_history)
+    await chat_repo.update_summary(id, response, summary_id)
