@@ -1,6 +1,6 @@
 # Server settings
 bind = ["localhost:5000"] # Address and port to bind
-workers = 5 # Number of worker processes
+workers = 1 # Number of worker processes
 
 # Timeout settings
 keep_alive_timeout = 5 # Time to keep connections alive (seconds)
