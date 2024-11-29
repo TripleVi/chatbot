@@ -36,7 +36,7 @@ async def gen_chat_title(input: str):
         ("system", "You are a friendly assistant. Provide a concise Vietnamese title to the conversation based on the following question. Please respond only with the title in affirmative form, without any special characters (e.g., '.', '?') at the end."),
         ("human", "{text}")
     ])
-    model = ChatVertexAI(model="gemini-1.5-flash-002", temperature=1, max_tokens=40)
+    model = ChatVertexAI(model=os.environ["GOOGLE_MODEL2"], temperature=1, max_tokens=40)
     chain = prompt_template | model | StrOutputParser()
     response = await chain.ainvoke({"text": input})
     return response.strip()
@@ -94,7 +94,7 @@ async def summarize_conversation(id: int):
     chat_history = get_llm_messages(raw_messages[:-2])
     if not chat_history:
         return
-    model = ChatVertexAI(model="gemini-1.5-flash-002", temperature=1, max_tokens=500)
+    model = ChatVertexAI(model=os.environ["GOOGLE_MODEL2"], temperature=1, max_tokens=500)
     tokens = model.get_num_tokens_from_messages(chat_history)
     if tokens <= 300 and len(chat_history) <= 8:
         return

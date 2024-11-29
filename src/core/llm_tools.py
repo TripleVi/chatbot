@@ -28,7 +28,7 @@ def sql_db_list_tables():
     }
 
 def get_sql_tools():
-    model = ChatVertexAI(model="gemini-1.5-flash-002", temperature=0, max_tokens=300)
+    model = ChatVertexAI(model=os.environ["GOOGLE_MODEL2"], temperature=0, max_tokens=300)
     db = init_sql_db()
     toolkit = SQLDatabaseToolkit(db=db, llm=model)
     tools = toolkit.get_tools()
