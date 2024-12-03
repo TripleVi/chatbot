@@ -28,8 +28,12 @@ async def create_message(id):
     content = itemgetter("content")(body)
     try:
         res_generator = await chat_service.add_message(id, content)
-        headers = {"content_type":"text/plain; charset=utf-8"}
-        return res_generator(), 201, headers
+        headers = {
+            "Content-Type": "text/plain; charset=utf-8",
+            "Connection": "keep-alive",
+            "Cache-Control": "no-cache",
+        }
+        return res_generator, 201, headers
     except Exception as err:
         print(err)
         return "Internal Server Error", 500
