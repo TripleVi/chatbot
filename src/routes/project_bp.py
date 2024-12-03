@@ -9,7 +9,8 @@ project_bp = Blueprint("project", __name__, url_prefix="/projects")
 
 @project_bp.route("/<int:id>", methods=["POST"])
 async def project_handler(id):
-    status = itemgetter("status")(request.get_json())
+    body = await request.get_json()
+    status = itemgetter("status")(body)
     try:
         await project_service.handle_event(id, status)
         return "No Content", 204

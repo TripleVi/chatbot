@@ -9,7 +9,8 @@ major_bp = Blueprint("major", __name__, url_prefix="/majors")
 
 @major_bp.route("/<int:id>", methods=["POST"])
 async def major_handler(id):
-    status = itemgetter("status")(request.get_json())
+    body = await request.get_json()
+    status = itemgetter("status")(body)
     try:
         await major_service.handle_event(id, status)
         return "No Content", 204

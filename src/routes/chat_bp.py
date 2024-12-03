@@ -24,7 +24,8 @@ async def create_chat():
 
 @chat_bp.route("/<int:id>/messages", methods=["POST"])
 async def create_message(id):
-    content = itemgetter("content")(request.get_json())
+    body = await request.get_json()
+    content = itemgetter("content")(body)
     try:
         res_generator = await chat_service.add_message(id, content)
         headers = {"content_type":"text/plain; charset=utf-8"}
