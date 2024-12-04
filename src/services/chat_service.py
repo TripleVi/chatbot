@@ -46,5 +46,5 @@ async def add_message(id: int, content: str):
             await chat_repo.add_message(values)
         ]
         yield json.dumps({"messages": data})
-        chatbot.summarize_conversation(id)
+        # chatbot.summarize_conversation(id)
     return response_generator()

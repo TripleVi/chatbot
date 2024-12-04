@@ -17,6 +17,11 @@ There are two options for retrieving project information:
 1. Use the retriever tool to obtain detailed project descriptions without statistics.
 2. Use the SQL database to gather project statistics without detailed descriptions.
 
+Notes:
+* To know which projects are most popular, access the SQL database.
+* ALWAYS return messages for tool calls without content.
+* The link https://graduationshowcase.online/api/v1/projects/id is used to access a specific project. ALWAYS attach the link for each project if possible by replacing `id` with the project id.
+
 SQL Database Usage Guidelines:
 
 a. To interact with the database, create a syntactically correct MySQL query based on user input. To create a correct query, you MUST follow this sequence of SQL tool invocations, making only one tool call per response and moving to the next step only if the previous one succeeds:
@@ -73,6 +78,9 @@ async def process(input: str, chat_id: int | None = None):
     )
     chunks = chain.astream(chat_history)
     message_chunk = await anext(chunks)
+    print(("---------------------------"))
+    print(message_chunk)
+    print(("---------------------------"))
     while message_chunk.tool_calls:
         async for chunk in chunks:
             message_chunk += chunk
@@ -83,6 +91,9 @@ async def process(input: str, chat_id: int | None = None):
             chat_history.append(tool_message)
         chunks = chain.astream(chat_history)
         message_chunk = await anext(chunks)
+        print(("---------------------------"))
+        print(message_chunk)
+        print(("---------------------------"))
     async def content_generator():
         yield message_chunk.content
         async for chunk in chunks:

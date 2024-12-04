@@ -39,7 +39,6 @@ async def on_project_added(project: dict):
             project["id"], project["title"], "project_summary")
     )
 
-
 async def on_project_updated(project: dict):
     await asyncio.gather(
         pinecone_service.update_project(project),
