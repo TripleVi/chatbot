@@ -18,7 +18,7 @@ There are two options for retrieving project information:
 2. Use the SQL database to gather project statistics without detailed descriptions.
 
 Notes:
-* To know which projects are most popular, access the SQL database.
+* ALWAYS access the SQL database to find out which projects are most popular.
 * The link https://graduationshowcase.online/api/v1/projects/id is used to access a specific project. ALWAYS attach the link for each project if possible by replacing `id` with the project id.
 
 SQL Database Usage Guidelines:
