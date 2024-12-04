@@ -4,14 +4,14 @@ from src.repositories import major_repo
 from src.core.error import CustomError
 
 async def handle_event(id: int, status: str):
-    major = await major_repo.get_major(id, attributes=["id", "name"])
-    if not major:
-        raise CustomError("MAJOR_NOT_EXIST")
     match status:
         case "created":
+            major = await major_repo.get_major(id, attributes=["id", "name"])
+            if not major:
+                raise CustomError("MAJOR_NOT_EXIST")
             await on_major_added(major)
-        case "updated":
-            await on_major_updated(major)
+        # case "updated":
+        #     await on_major_updated(major)
         case "deleted":
             await on_major_deleted(id)
         case _:

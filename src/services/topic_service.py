@@ -4,14 +4,14 @@ from src.repositories import topic_repo
 from src.core.error import CustomError
 
 async def handle_event(id: int, status: str):
-    topic = await topic_repo.get_topic(id, attributes=["id", "name"])
-    if not topic:
-        raise CustomError("TOPIC_NOT_EXIST")
     match status:
         case "created":
+            topic = await topic_repo.get_topic(id, attributes=["id", "name"])
+            if not topic:
+                raise CustomError("TOPIC_NOT_EXIST")
             await on_topic_added(topic)
-        case "updated":
-            await on_topic_updated(topic)
+        # case "updated":
+        #     await on_topic_updated(topic)
         case "deleted":
             await on_topic_deleted(id)
         case _:
