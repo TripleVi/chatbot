@@ -22,7 +22,7 @@ async def add_chat(user_id: int, content: str):
     chunks = await chatbot.process(content)
     async def response_generator():
         text = ""
-        async for chunk in chunks:
+        for chunk in chunks:
             text += chunk
             yield chunk
         data = await task
@@ -37,7 +37,7 @@ async def add_message(id: int, content: str):
     chunks = await chatbot.process(content)
     async def response_generator():
         text = ""
-        async for chunk in chunks:
+        for chunk in chunks:
             text += chunk
             yield chunk
         values = (text.strip(), "assistant", id)

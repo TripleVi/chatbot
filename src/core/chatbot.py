@@ -19,7 +19,6 @@ There are two options for retrieving project information:
 
 Notes:
 * To know which projects are most popular, access the SQL database.
-* ALWAYS return messages for tool calls without content.
 * The link https://graduationshowcase.online/api/v1/projects/id is used to access a specific project. ALWAYS attach the link for each project if possible by replacing `id` with the project id.
 
 SQL Database Usage Guidelines:
@@ -76,28 +75,30 @@ async def process(input: str, chat_id: int | None = None):
         | prompt_template
         | model_with_tools
     )
+    text = []
     chunks = chain.astream(chat_history)
     message_chunk = await anext(chunks)
-    print(("---------------------------"))
-    print(message_chunk)
-    print(("---------------------------"))
+    text.append(message_chunk.content)
+    async for chunk in chunks:
+        text.append(chunk.content)
+        message_chunk += chunk
     while message_chunk.tool_calls:
-        async for chunk in chunks:
-            message_chunk += chunk
+        # async for chunk in chunks:
+        #     message_chunk += chunk
         chat_history.append(message_chunk)
         for tool_call in message_chunk.tool_calls:
             selected_tool = available_tools[tool_call["name"].lower()]
             tool_message = await selected_tool.ainvoke(tool_call)
             chat_history.append(tool_message)
         chunks = chain.astream(chat_history)
+        text.clear()
         message_chunk = await anext(chunks)
-        print(("---------------------------"))
-        print(message_chunk)
-        print(("---------------------------"))
-    async def content_generator():
-        yield message_chunk.content
+        text.append(message_chunk.content)
         async for chunk in chunks:
-            yield chunk.content
+            text.append(chunk.content)
+            message_chunk += chunk
+    def content_generator():
+        yield from text
     return content_generator()
 
 async def summarize_conversation(id: int):
